@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"log"
 
-	_ "github.com/lib/pq"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 const (
@@ -16,7 +16,21 @@ type PersistResponse struct {
 }
 
 func PersistParticleCollision(p1Name string, p2Name string, epoch int, timestep int) (PersistResponse, error) {
-	return PersistResponse{}, nil
+	db, err := sql.Open("postgres", connectionstring)
+	defer db.Close()
+	if err != nil {
+		log.Println("error connecting to the database: ", err)
+		return PersistResponse{isSucces: false}, err
+	}
+	sqlString, err := db.Prepare("INSERT INTO Knuth.particlecollision(p1, p2, epoch, timestep) VALUES(?, ?, ?, ?)")
+	if  err != nil {
+		log.Println("error inserting into particlecollision table: ", err)
+		return PersistResponse{isSucces: false}, err
+	}
+
+	sqlString.exec(p1Name, p2Name, epoch, timestep)
+
+	return PersistResponse{isSucces : true}, nil
 }
 
 func PersistWallCollisionEvent(pName string, wallName string, epoch int, timestep int) (PersistResponse, error) {
@@ -104,3 +118,4 @@ func init() {
 	createParticle()
 	createLocation()
 }
+``
