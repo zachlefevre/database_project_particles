@@ -138,6 +138,7 @@ function reset() {
     }
 }
 function setup() {
+    frameRate(60)
     createCanvas(innerWidth, innerHeight);
     ballArr = [];
 
