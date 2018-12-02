@@ -1,6 +1,6 @@
 package particle
 
 type Particle struct {
-	Name string
-	Mass int
+	Name string  `json:"name"`
+	Mass float64 `json:"mass"`
 }

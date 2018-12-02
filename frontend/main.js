@@ -1,8 +1,17 @@
 console.log("main.js loaded");
-var maxBalls = 20
+// var apiURL = "https://jsonplaceholder.typicode.com/posts"
+var apiURL = "http://localhost:3080/api"
+var maxBalls = 2
 var ballToSizeScalingRatio = 3
-function wallEvent(particle, wall) {
+function wallEvent(particle, wall, epoch, timestep) {
     console.log(particle.name + ' collided with wall ' + wall)
+    data = {
+        p: particle.name,
+        wall: wall,
+        epoch: epoch,
+        timestep: timestep
+    }
+    axios.post(apiURL + "/collision/wall", data).then(ret => console.log(ret)).catch(err => console.log(err, JSON.stringify(data)))
 }
 function ballEvent(particle1, particle2) {
     particle1.randomizeColor()
@@ -44,10 +53,10 @@ class Mover {
         fill(this.r, this.g, this.b);
         ellipse(this.location.x, this.location.y, this.w, this.h);
     }
-    randomizeColor(){
+    randomizeColor() {
         this.r = random(0, 255)
         this.g = random(0, 255)
-        this.b = random(0, 255)  
+        this.b = random(0, 255)
     }
     update() {
         this.velocity.add(this.acceleration);
@@ -58,25 +67,25 @@ class Mover {
     checkForWalls() {
         if (this.location.x > width) {
             this.velocity.x *= -1;
-            wallEvent(this, 'RIGHT')
+            wallEvent(this, 'RIGHT', epoch, ts)
         } else if (this.location.x < 0) {
             this.velocity.x *= -1;
-            wallEvent(this, 'LEFT')
+            wallEvent(this, 'LEFT', epoch, ts)
         }
 
         if (this.location.y > height) {
             this.velocity.y *= -1;
-            wallEvent(this, 'BOTTOM')
+            wallEvent(this, 'BOTTOM', epoch, ts)
         } else if (this.location.y < 0) {
             this.velocity.y *= -1;
-            wallEvent(this, 'TOP')
+            wallEvent(this, 'TOP', epoch, ts)
         }
     }
     checkForCollision(ballArr) {
         for (var i = 0; i < ballArr.length; i++) {
             const ball = ballArr[i]
-            if(this.name == ball.name) break;
-            if(this.location.dist(ball.location) < this.w/2 + ball.w/2){
+            if (this.name == ball.name) break;
+            if (this.location.dist(ball.location) < this.w / 2 + ball.w / 2) {
                 ballEvent(this, ball)
             }
         }
@@ -138,7 +147,7 @@ function reset() {
     }
 }
 function setup() {
-    frameRate(60)
+    frameRate(5)
     createCanvas(innerWidth, innerHeight);
     ballArr = [];
 
@@ -152,7 +161,8 @@ function setup() {
     pool = new Liquid(liquidParam);
     reset()
 }
-var t = 0;
+var epoch = 0;
+var ts = 0;
 function draw() {
     background(255);
     pool.display();
@@ -172,8 +182,10 @@ function draw() {
         }
         ballArr[i].limit();
     }
-    t++
-    if (t % 300 == 0) {
+    ts++
+    if (ts % 300 == 0) {
+        epoch++
+        ts = 0
         reset()
         console.log('new epoch')
     }

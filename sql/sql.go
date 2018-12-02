@@ -16,10 +16,12 @@ type PersistResponse struct {
 }
 
 func PersistParticleCollision(p1Name string, p2Name string, epoch int, timestep int) (PersistResponse, error) {
+	log.Println(p1Name + " hit " + p2Name)
 	return PersistResponse{}, nil
 }
 
 func PersistWallCollisionEvent(pName string, wallName string, epoch int, timestep int) (PersistResponse, error) {
+	log.Println(pName + " hit " + wallName)
 	return PersistResponse{}, nil
 }
 
@@ -98,9 +100,10 @@ func createLocation() {
 }
 
 func init() {
-	createDatabase()
-	createParticleCollision()
-	createWallCollision()
-	createParticle()
-	createLocation()
+	// createDatabase()
+	// createParticleCollision()
+	// createWallCollision()
+	// createParticle()
+	// createLocation()
+
 }

@@ -8,12 +8,11 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/zachlefevre/project_knuth/particle"
 )
 
 func main() {
 	server := &http.Server{
-		Addr:    ":3030",
+		Addr:    ":3080",
 		Handler: initRoutes(),
 	}
 	log.Println("Http Server Listening...")
@@ -36,10 +35,10 @@ func sig(w http.ResponseWriter, r *http.Request) {
 }
 
 type particleCollisionEvent struct {
-	p1       particle.Particle
-	p2       particle.Particle
-	epoch    int
-	timestep int
+	P1       string `json:"p1Name"`
+	P2       string `json:"p2Name"`
+	Epoch    int    `json:"epoch"`
+	Timestep int    `json:"timestep"`
 }
 
 func particleCollision(w http.ResponseWriter, r *http.Request) {
@@ -50,21 +49,23 @@ func particleCollision(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := sql.PersistParticleCollision(event.p1.Name, event.p2.Name, event.epoch, event.timestep)
+	resp, err := sql.PersistParticleCollision(event.P1, event.P2, event.Epoch, event.Timestep)
 	if err != nil {
 		http.Error(w, "Failed to persist particle collision", 500)
 	}
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	log.Println(w.Header())
 	w.WriteHeader(http.StatusCreated)
 	j, _ := json.Marshal(resp)
 	w.Write(j)
 }
 
 type wallCollisionEvent struct {
-	p        particle.Particle
-	wall     string
-	epoch    int
-	timestep int
+	P        string `json:"p"`
+	Wall     string `json:"wall"`
+	Epoch    int    `json:"epoch"`
+	Timestep int    `json:"timestep"`
 }
 
 func wallCollision(w http.ResponseWriter, r *http.Request) {
@@ -75,22 +76,23 @@ func wallCollision(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := sql.PersistWallCollisionEvent(event.p.Name, event.wall, event.epoch, event.timestep)
+	resp, err := sql.PersistWallCollisionEvent(event.P, event.Wall, event.Epoch, event.Timestep)
 	if err != nil {
 		http.Error(w, "Failed to persist wall collision", 500)
 	}
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(http.StatusCreated)
 	j, _ := json.Marshal(resp)
 	w.Write(j)
 }
 
 type particleLocationObj struct {
-	particleName string
-	epoch        int
-	timestep     int
-	x            int
-	y            int
+	ParticleName string `json:"particleName"`
+	Epoch        int    `json:"epoch"`
+	Timestep     int    `json:"timestep"`
+	X            int    `json:"x"`
+	Y            int    `json:"y"`
 }
 
 func particleLocation(w http.ResponseWriter, r *http.Request) {
@@ -100,7 +102,7 @@ func particleLocation(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid Wall Collision Event", 500)
 		return
 	}
-	resp, err := sql.PersistParticleLocation(loc.particleName, loc.epoch, loc.timestep, loc.x, loc.y)
+	resp, err := sql.PersistParticleLocation(loc.ParticleName, loc.Epoch, loc.Timestep, loc.X, loc.Y)
 	if err != nil {
 		http.Error(w, "Failed to persist wall collision", 500)
 	}
