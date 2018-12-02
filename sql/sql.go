@@ -75,7 +75,7 @@ func createParticle() {
 		log.Fatal("error connecting to the database: ", err)
 	}
 	sqlString := `CREATE TABLE IF NOT EXISTS Knuth.particle
-	(name STRING, mass INT)`
+	(name STRING, mass FLOAT (3, 2))`
 	if resp, err := db.Exec(sqlString); err != nil {
 		log.Fatal("Failed to Execute"+sqlString, err)
 	} else {
