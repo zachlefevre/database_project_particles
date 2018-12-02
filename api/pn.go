@@ -1,15 +1,11 @@
 package main
 
 import (
-	"bytes"
-	"fmt"
-	"strings"
+	"github.com/zachlefevre/project_knuth/sql"
 
-	"context"
 	"encoding/json"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/zachlefevre/project_knuth/particle"
@@ -29,6 +25,7 @@ func initRoutes() *mux.Router {
 	router := mux.NewRouter()
 	router.HandleFunc("/api/collision/particle", particleCollision).Methods("POST")
 	router.HandleFunc("/api/collision/wall", wallCollision).Methods("POST")
+	router.HandleFunc("/api/location/particle", particleLocation).Methods("POST")
 	router.HandleFunc("/sig", sig).Methods("GET")
 	return router
 }
@@ -38,7 +35,7 @@ func sig(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("<h1>Made by zachlefevre@gmail.com</h1>"))
 }
 
-type collisionEvent struct {
+type particleCollisionEvent struct {
 	p1       particle.Particle
 	p2       particle.Particle
 	epoch    int
@@ -46,142 +43,69 @@ type collisionEvent struct {
 }
 
 func particleCollision(w http.ResponseWriter, r *http.Request) {
-	var event collisionEvent
+	var event particleCollisionEvent
 	err := json.NewDecoder(r.Body).Decode(&event)
 	if err != nil {
-		http.Error(w, "Invalid Collision Event", 500)
+		http.Error(w, "Invalid Particle Collision Event", 500)
 		return
 	}
 
-	sql.persistParticleCollision(event.p1, event.p2, event.epoch, event.timestep)
-
+	resp, err := sql.PersistParticleCollision(event.p1.Name, event.p2.Name, event.epoch, event.timestep)
+	if err != nil {
+		http.Error(w, "Failed to persist particle collision", 500)
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	j, _ := json.Marshal(resp)
 	w.Write(j)
 }
-func createAlgorithmRPC(cmd *pb.CreateAlgorithmCommand) (*pb.Algorithm, error) {
-	conn, err := grpc.Dial(grpcURI, grpc.WithInsecure())
-	if err != nil {
-		log.Fatalf("Unable to connect: %v", err)
-	}
-	defer conn.Close()
 
-	client := pb.NewAlgorithmAggregateClient(conn)
-	return client.CreateAlgorithm(context.Background(), cmd)
-}
-func getAlgorithm(w http.ResponseWriter, r *http.Request) {
-	var algo pb.Algorithm
-	err := json.NewDecoder(r.Body).Decode(&algo)
-	if err != nil {
-		http.Error(w, "Invalid algoritm", 500)
-		return
-	}
-
-	queryID, _ := uuid.NewV4()
-	getQuery := pb.GetAlgorithmQuery{
-		Algorithm: &algo,
-		CreatedOn: time.Now().Unix(),
-		Id:        queryID.String(),
-	}
-	resp, err := getAlgorithmRPC(&getQuery)
-	if err != nil {
-		log.Print(err)
-		http.Error(w, "Failed to get algorithm", 500)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	if resp == nil {
-		w.WriteHeader(http.StatusNotFound)
-	} else {
-		w.WriteHeader(http.StatusFound)
-	}
-	j, _ := json.Marshal(resp)
-	w.Write(j)
-}
-func getAlgorithmRPC(query *pb.GetAlgorithmQuery) (*pb.Algorithm, error) {
-	conn, err := grpc.Dial(grpcURI, grpc.WithInsecure())
-	if err != nil {
-		log.Fatalf("Unable to connect: %v", err)
-	}
-	defer conn.Close()
-
-	client := pb.NewAlgorithmAggregateClient(conn)
-	return client.GetAlgorithm(context.Background(), query)
+type wallCollisionEvent struct {
+	p        particle.Particle
+	wall     string
+	epoch    int
+	timestep int
 }
 
-func addFile(w http.ResponseWriter, r *http.Request) {
-	algoName := r.URL.Query().Get("algorithm")
-	version := r.URL.Query().Get("version")
-	if algoName == "" {
-		w.WriteHeader(http.StatusNotFound)
-	}
-	if version == "" {
-		w.WriteHeader(http.StatusNotFound)
-	}
-
-	file, handler, err := r.FormFile("uploadfile")
+func wallCollision(w http.ResponseWriter, r *http.Request) {
+	var event wallCollisionEvent
+	err := json.NewDecoder(r.Body).Decode(&event)
 	if err != nil {
-		fmt.Println(err)
+		http.Error(w, "Invalid Wall Collision Event", 500)
 		return
 	}
-	defer file.Close()
 
-	fileContent := make([]byte, 100)
-	_, err = file.Read(fileContent)
+	resp, err := sql.PersistWallCollisionEvent(event.p.Name, event.wall, event.epoch, event.timestep)
 	if err != nil {
-		log.Print(err)
-		http.Error(w, "Failed to read file", 500)
-		return
+		http.Error(w, "Failed to persist wall collision", 500)
 	}
-	fileContent = bytes.Trim(fileContent, "\x00")
-	fileStr := string(fileContent)
-
-	cd := strings.Split(handler.Header.Get("Content-Disposition"), "; ")
-	nameSection := cd[2]
-	log.Println(cd, nameSection)
-	name := strings.Split(nameSection, "=")[1]
-	name = name[1 : len(name)-1]
-	log.Println(name)
-	queryID, _ := uuid.NewV4()
-	getQuery := pb.GetAlgorithmQuery{
-		Algorithm: &pb.Algorithm{
-			Name:    algoName,
-			Version: version,
-		},
-		CreatedOn: time.Now().Unix(),
-		Id:        queryID.String(),
-	}
-	algo, err := getAlgorithmRPC(&getQuery)
-	if err != nil {
-		log.Print(err)
-		http.Error(w, "Failed to get algorithm", 500)
-		return
-	}
-	log.Println(handler.Header)
-	algoFile := pb.AlgorithmFile{
-		Content:  fileStr,
-		Name:     name,
-		Filetype: handler.Header.Get("Content-Type"),
-	}
-
-	addFileCmd := pb.AssociateFileCommand{
-		Algorithm:     algo,
-		AlgorithmFile: &algoFile,
-	}
-	resp, err := addFileRPC(&addFileCmd)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	j, _ := json.Marshal(resp)
 	w.Write(j)
 }
-func addFileRPC(cmd *pb.AssociateFileCommand) (*pb.Algorithm, error) {
-	conn, err := grpc.Dial(grpcURI, grpc.WithInsecure())
-	if err != nil {
-		log.Fatalf("Unable to connect: %v", err)
-	}
-	defer conn.Close()
 
-	client := pb.NewAlgorithmAggregateClient(conn)
-	return client.AssociateFile(context.Background(), cmd)
+type particleLocationObj struct {
+	particleName string
+	epoch        int
+	timestep     int
+	x            int
+	y            int
+}
+
+func particleLocation(w http.ResponseWriter, r *http.Request) {
+	var loc particleLocationObj
+	err := json.NewDecoder(r.Body).Decode(&loc)
+	if err != nil {
+		http.Error(w, "Invalid Wall Collision Event", 500)
+		return
+	}
+	resp, err := sql.PersistParticleLocation(loc.particleName, loc.epoch, loc.timestep, loc.x, loc.y)
+	if err != nil {
+		http.Error(w, "Failed to persist wall collision", 500)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	j, _ := json.Marshal(resp)
+	w.Write(j)
 }

@@ -1,6 +1,6 @@
 package particle
 
 type Particle struct {
-	name string
-	mass int
+	Name string
+	Mass int
 }
