@@ -1,6 +1,6 @@
 console.log("main.js loaded");
-// var apiURL = "https://jsonplaceholder.typicode.com/posts"
-var apiURL = "http://localhost:3080/api"
+// var apiURL = "localhost:3080/api"
+var apiURL = "https://secure-fjord-56157.herokuapp.com/api"
 var maxBalls = 2
 var ballToSizeScalingRatio = 3
 function wallEvent(particle, wall, epoch, timestep) {
@@ -9,7 +9,8 @@ function wallEvent(particle, wall, epoch, timestep) {
         p: particle.name,
         wall: wall,
         epoch: epoch,
-        timestep: timestep
+        timestep: timestep,
+        mode: 'no-cors'
     }
     axios.post(apiURL + "/collision/wall", data).then(ret => console.log(ret)).catch(err => console.log(err, JSON.stringify(data)))
 }

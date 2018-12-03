@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/zachlefevre/project_knuth/sql"
 
 	"encoding/json"
@@ -12,7 +14,7 @@ import (
 
 func main() {
 	server := &http.Server{
-		Addr:    ":3080",
+		Addr:    ":" + os.Getenv("PORT"),
 		Handler: initRoutes(),
 	}
 	log.Println("Http Server Listening...")
@@ -25,7 +27,7 @@ func initRoutes() *mux.Router {
 	router.HandleFunc("/api/collision/particle", particleCollision).Methods("POST")
 	router.HandleFunc("/api/collision/wall", wallCollision).Methods("POST")
 	router.HandleFunc("/api/location/particle", particleLocation).Methods("POST")
-	router.HandleFunc("/sig", sig).Methods("GET")
+	router.HandleFunc("/api/sig", sig).Methods("GET")
 	return router
 }
 func sig(w http.ResponseWriter, r *http.Request) {
@@ -54,7 +56,6 @@ func particleCollision(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to persist particle collision", 500)
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	log.Println(w.Header())
 	w.WriteHeader(http.StatusCreated)
 	j, _ := json.Marshal(resp)
@@ -82,6 +83,8 @@ func wallCollision(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 	w.WriteHeader(http.StatusCreated)
 	j, _ := json.Marshal(resp)
 	w.Write(j)

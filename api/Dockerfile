@@ -11,4 +11,5 @@ RUN apk --no-cache add ca-certificates
 RUN mkdir /app
 WORKDIR /app
 COPY --from=builder /go/src/github.com/zachlefevre/project_knuth/api/api .
+ENV PORT=3080
 CMD [ "./api" ]
