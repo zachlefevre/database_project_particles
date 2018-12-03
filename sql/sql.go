@@ -28,7 +28,7 @@ func PersistParticleCollision(p1Name string, p2Name string, epoch int, timestep 
 		return PersistResponse{isSuccess: false}, err
 	}
 
-	sqlString.exec(p1Name, p2Name, epoch, timestep)
+	sqlString.Exec(p1Name, p2Name, epoch, timestep)
 
 	return PersistResponse{
 		isSuccess: true,
