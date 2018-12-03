@@ -12,7 +12,7 @@ const (
 )
 
 type PersistResponse struct {
-	isSucces bool
+	isSuccess bool
 }
 
 func PersistParticleCollision(p1Name string, p2Name string, epoch int, timestep int) (PersistResponse, error) {
@@ -20,17 +20,19 @@ func PersistParticleCollision(p1Name string, p2Name string, epoch int, timestep 
 	defer db.Close()
 	if err != nil {
 		log.Println("error connecting to the database: ", err)
-		return PersistResponse{isSucces: false}, err
+		return PersistResponse{isSuccess: false}, err
 	}
 	sqlString, err := db.Prepare("INSERT INTO Knuth.particlecollision(p1, p2, epoch, timestep) VALUES(?, ?, ?, ?)")
-	if  err != nil {
+	if err != nil {
 		log.Println("error inserting into particlecollision table: ", err)
-		return PersistResponse{isSucces: false}, err
+		return PersistResponse{isSuccess: false}, err
 	}
 
 	sqlString.exec(p1Name, p2Name, epoch, timestep)
 
-	return PersistResponse{isSucces : true}, nil
+	return PersistResponse{
+		isSuccess: true,
+	}, nil
 }
 
 func PersistWallCollisionEvent(pName string, wallName string, epoch int, timestep int) (PersistResponse, error) {
@@ -118,4 +120,3 @@ func init() {
 	createParticle()
 	createLocation()
 }
-``
