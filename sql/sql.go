@@ -191,8 +191,27 @@ func GetAllParticles() []string {
 	return particles
 }
 
+//particle VARCHAR(20), epoch INT, timestep INT, x INT, y INT
 func PersistParticleLocation(pName string, epoch int, timestep int, x int, y int) (PersistResponse, error) {
-	return PersistResponse{}, nil
+	log.Println("epoch: ", epoch, "timestep: ", timestep, "pName: ", pName)
+	db, err := sql.Open("postgres", connectionstring)
+	defer db.Close()
+
+	if err != nil {
+		log.Println("Error connecting to the database: ", err)
+		return PersistResponse{isSuccess: false}, err
+	}
+
+	localString := fmt.Sprintf("%v", "%v", "%v", "%v", "%v",
+		pName, epoch, timestep, x, y)
+	if resp, err := db.Exec(`INSERT INTO location VALUES( ` + localString + `)`); err != nil {
+		log.Println("Error inserting into location table: ", err)
+		return PersistResponse{isSuccess: false}, err
+	} else {
+		log.Println("Inserted particle location", resp)
+	}
+
+	return PersistResponse{isSuccess: true}, nil
 }
 
 func PersistParticle(pName string, mass float64) (PersistResponse, error) {
