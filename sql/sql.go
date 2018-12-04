@@ -104,8 +104,9 @@ func GetAllWallCollisionEvents() {
 
 }
 
+//particle VARCHAR(20), epoch INT, timestep INT, x INT, y INT
 func PersistParticleLocation(pName string, epoch int, timestep int, x int, y int) (PersistResponse, error) {
-	log.Println(pName + " in epoch" + epoch + " was at x=" + x + " and y=" + y + " at timestep: " + timestep)
+	log.Println("epoch: ", epoch, "timestep: ", timestep, "pName: ", pName)
 	db, err := sql.Open("postgres", connectionstring)
 	defer db.Close()
 
@@ -113,14 +114,15 @@ func PersistParticleLocation(pName string, epoch int, timestep int, x int, y int
 		log.Println("Error connecting to the database: ", err)
 		return PersistResponse{isSuccess: false}, err
 	}
-	
-	sqlString, err := db.Prepare("INSERT INTO location(p, epoch, timestep, x, y) VALUES(?, ?, ?, ?, ?)")
-	if err != nil {
+
+	localString := fmt.Sprintf("%v", "%v", "%v", "%v", "%v",
+		pName, epoch, timestep, x, y)
+	if resp, err := db.Exec(`INSERT INTO location VALUES( ` + localString + `)`); err != nil {
 		log.Println("Error inserting into location table: ", err)
 		return PersistResponse{isSuccess: false}, err
+	} else {
+		log.Println("Inserted particle location", resp)
 	}
-
-	sqlString.Exec(pName, epoch, timestep, x, y)
 
 	return PersistResponse{isSuccess: true}, nil
 }
