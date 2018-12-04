@@ -1,0 +1,12 @@
+"For epoch e, give me every particle collison"
+"For epoch e, give me every particle collison with particle p"
+"For every particle collision c in epoch e, give me the particles involved"
+"For epoch e, give me every collision that happened in the last 30 frames"
+"For epoch e, give me every particle collison involving a set of particles"
+
+"the set of particles which collided, then hit opposite walls"
+
+"average number of collisions with walls over all particles"
+"average number of collisions with walls of a particular particle"
+^^ same thing but collisions with other particles
+"epoch with the highest number of collisions"
