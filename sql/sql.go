@@ -20,25 +20,74 @@ type PersistResponse struct {
 	isSuccess bool
 }
 
+//(id UUID, p1 VARCHAR(20), p2 VARCHAR(20), epoch INT, timestep INT)
 func PersistParticleCollision(p1Name string, p2Name string, epoch int, timestep int) (PersistResponse, error) {
-	log.Println(p1Name + " hit " + p2Name)
+	log.Println("epoch: ", epoch, "timestep: ", timestep, "p1: ", p1Name, "p2: ", p2Name)
 	db, err := sql.Open("postgres", connectionstring)
 	defer db.Close()
 	if err != nil {
 		log.Println("error connecting to the database: ", err)
 		return PersistResponse{isSuccess: false}, err
 	}
-	sqlString, err := db.Prepare("INSERT INTO particlecollision(p1, p2, epoch, timestep) VALUES(?, ?, ?, ?)")
-	if err != nil {
-		log.Println("error inserting into particlecollision table: ", err)
-		return PersistResponse{isSuccess: false}, err
-	}
+	id, _ := uuid.NewV4()
 
-	sqlString.Exec(p1Name, p2Name, epoch, timestep)
+	collString := fmt.Sprintf("'%v', '%v', '%v', %v, %v",
+		id.String(),
+		p1Name,
+		p2Name,
+		epoch,
+		timestep)
+	sql := "INSERT INTO particleCollision VALUES (" + collString + ")"
+	log.Println("executing: ", sql)
+
+	if resp, err := db.Exec(
+		sql); err != nil {
+		log.Fatal("Failed to persist particle collision", err)
+	} else {
+		log.Println("Persisted particle collision ", resp)
+	}
 
 	return PersistResponse{
 		isSuccess: true,
 	}, nil
+}
+func GetAllParticleCollisions() []string {
+	db, err := sql.Open("postgres", connectionstring)
+	defer db.Close()
+	if err != nil {
+		log.Println("error connecting to the database: ", err)
+	}
+
+	sql := "SELECT * FROM particleCollision"
+	log.Println("executing: ", sql)
+
+	rows, err := db.Query(sql)
+	if err != nil {
+		log.Fatal("Failed to get all particle collisions", err)
+	}
+	defer rows.Close()
+	var collisions []string
+	for rows.Next() {
+		var (
+			id       string
+			p1       string
+			p2       string
+			epoch    int
+			timestep int
+		)
+		if err := rows.Scan(&id, &p1, &p2, &epoch, &timestep); err != nil {
+			log.Fatal("Failed to read particle collision row", err)
+		}
+		collision := fmt.Sprintf("id %v : p1 %v collided with p2 %v at epoch %v timestep %v",
+			id,
+			p1,
+			p2,
+			epoch,
+			timestep)
+		collisions = append(collisions, collision)
+	}
+	return collisions
+
 }
 
 func PersistWallCollisionEvent(pName string, wallName string, epoch int, timestep int) (PersistResponse, error) {
@@ -73,7 +122,7 @@ func PersistWallCollisionEvent(pName string, wallName string, epoch int, timeste
 }
 
 //(id UUID, particle VARCHAR(20), obj VARCHAR(20), epoch INT, timestep INT)`
-func GetAllWallCollisionEvents() {
+func GetAllWallCollisionEvents() []string {
 	db, err := sql.Open("postgres", connectionstring)
 	defer db.Close()
 	if err != nil {
@@ -88,6 +137,7 @@ func GetAllWallCollisionEvents() {
 		log.Fatal("Failed to get all wall collisions", err)
 	}
 	defer rows.Close()
+	var collisions []string
 	for rows.Next() {
 		var (
 			id       string
@@ -99,8 +149,15 @@ func GetAllWallCollisionEvents() {
 		if err := rows.Scan(&id, &particle, &objName, &epoch, &timestep); err != nil {
 			log.Fatal("Failed to read wallCollision row", err)
 		}
-		log.Println(id, particle, objName, objName, epoch, timestep)
+		collision := fmt.Sprintf("id %v : Particle %v collided with %v at epoch %v timestep %v",
+			id,
+			particle,
+			objName,
+			epoch,
+			timestep)
+		collisions = append(collisions, collision)
 	}
+	return collisions
 
 }
 

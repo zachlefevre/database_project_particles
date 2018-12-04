@@ -7,7 +7,6 @@ axios.defaults.headers.post['crossDomain'] = true;
 var maxBalls = 2
 var ballToSizeScalingRatio = 3
 function wallEvent(particle, wall, epoch, timestep) {
-    console.log(particle.name + ' collided with wall ' + wall)
     data = {
         p: particle.name,
         wall: wall,
@@ -17,10 +16,19 @@ function wallEvent(particle, wall, epoch, timestep) {
     }
     axios.post(apiURL + "/collision/wall", data).then(ret => console.log(ret)).catch(err => console.log(err, JSON.stringify(data)))
 }
-function ballEvent(particle1, particle2) {
+function ballEvent(particle1, particle2, epoch, timestep) {
     particle1.randomizeColor()
     particle2.randomizeColor()
     console.log(particle1, particle2)
+    data = {
+        p1Name: particle1.name,
+        p1Name: particle2.name,
+        epoch: epoch,
+        timestep: timestep,
+        mode: 'no-cors'
+    }
+    axios.post(apiURL + "/collision/particle", data).then(ret => console.log(ret)).catch(err => console.log(err, JSON.stringify(data)))
+
 }
 
 class Liquid {
@@ -90,7 +98,7 @@ class Mover {
             const ball = ballArr[i]
             if (this.name == ball.name) break;
             if (this.location.dist(ball.location) < this.w / 2 + ball.w / 2) {
-                ballEvent(this, ball)
+                ballEvent(this, ball, epoch, ts)
             }
         }
     }
