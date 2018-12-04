@@ -192,6 +192,41 @@ func GetAllParticles() []string {
 }
 
 //(particle VARCHAR(20), epoch INT, timestep INT, x FLOAT, y FLOAT)`
+func GetAllParticleLocations() []string {
+	db, err := sql.Open("postgres", connectionstring)
+	defer db.Close()
+	if err != nil {
+		log.Println("error connecting to the database: ", err)
+	}
+
+	sql := "SELECT * FROM location"
+	log.Println("executing: ", sql)
+
+	rows, err := db.Query(sql)
+	if err != nil {
+		log.Fatal("Failed to get particle locations", err)
+	}
+	defer rows.Close()
+	var locations []string
+	for rows.Next() {
+		var (
+			name     string
+			epoch    int
+			timestep int
+			x        float64
+			y        float64
+		)
+		if err := rows.Scan(&name, &epoch, &timestep, &x, &y); err != nil {
+			log.Fatal("Failed to read particle location row", err)
+		}
+		l := fmt.Sprintf("epoch: %v, timestep: %v, particle %v was at (%v, %v)",
+			epoch, timestep, name, x, y)
+		locations = append(locations, l)
+	}
+	return locations
+}
+
+//(particle VARCHAR(20), epoch INT, timestep INT, x FLOAT, y FLOAT)`
 func PersistParticleLocation(pName string, epoch int, timestep int, x float64, y float64) (PersistResponse, error) {
 	log.Println("epoch: ", epoch, "timestep: ", timestep, "pName: ", pName, "location (", x, y, ")")
 	db, err := sql.Open("postgres", connectionstring)

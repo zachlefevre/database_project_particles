@@ -41,6 +41,7 @@ func initRoutes() *mux.Router {
 	router.HandleFunc("/api/collision/wall", getWallCollisions).Methods("GET")
 	router.HandleFunc("/api/collision/particle", getParticleCollisions).Methods("GET")
 	router.HandleFunc("/api/entity/particle", getParticles).Methods("GET")
+	router.HandleFunc("/api/location/particle", getLocations).Methods("GET")
 	router.HandleFunc("/api/sig", sig).Methods("GET")
 	return router
 }
@@ -128,6 +129,13 @@ func getParticles(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	j, _ := json.Marshal(collisions)
+	w.Write(j)
+}
+func getLocations(w http.ResponseWriter, r *http.Request) {
+	locaiton := sql.GetAllParticleLocations()
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	j, _ := json.Marshal(locaiton)
 	w.Write(j)
 }
 func getWallCollisions(w http.ResponseWriter, r *http.Request) {
