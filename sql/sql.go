@@ -21,7 +21,7 @@ func PersistParticleCollision(p1Name string, p2Name string, epoch int, timestep 
 }
 
 func PersistWallCollisionEvent(pName string, wallName string, epoch int, timestep int) (PersistResponse, error) {
-	log.Println(pName + " hit " + wallName)
+	log.Println("epoch: ", epoch, "timestep: ", timestep, "wallName: ", wallName, "pName: ", pName)
 	return PersistResponse{}, nil
 }
 
