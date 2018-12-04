@@ -16,6 +16,7 @@ type PersistResponse struct {
 }
 
 func PersistParticleCollision(p1Name string, p2Name string, epoch int, timestep int) (PersistResponse, error) {
+	log.Println(p1Name + " hit " + p2Name)
 	db, err := sql.Open("postgres", connectionstring)
 	defer db.Close()
 	if err != nil {
@@ -36,6 +37,7 @@ func PersistParticleCollision(p1Name string, p2Name string, epoch int, timestep 
 }
 
 func PersistWallCollisionEvent(pName string, wallName string, epoch int, timestep int) (PersistResponse, error) {
+	log.Println("epoch: ", epoch, "timestep: ", timestep, "wallName: ", wallName, "pName: ", pName)
 	return PersistResponse{}, nil
 }
 
@@ -114,9 +116,10 @@ func createLocation() {
 }
 
 func init() {
-	createDatabase()
-	createParticleCollision()
-	createWallCollision()
-	createParticle()
-	createLocation()
+	// createDatabase()
+	// createParticleCollision()
+	// createWallCollision()
+	// createParticle()
+	// createLocation()
+
 }

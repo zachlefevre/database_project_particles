@@ -1,0 +1,9 @@
+version: '3'
+services: 
+  algorithm-api:
+    build:
+      context: .
+    image: frlnbrg/project_hopper_algorithm_api
+    ports:
+    - "80:80"
+    restart: always
