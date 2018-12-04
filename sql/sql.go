@@ -191,9 +191,9 @@ func GetAllParticles() []string {
 	return particles
 }
 
-//particle VARCHAR(20), epoch INT, timestep INT, x INT, y INT
-func PersistParticleLocation(pName string, epoch int, timestep int, x int, y int) (PersistResponse, error) {
-	log.Println("epoch: ", epoch, "timestep: ", timestep, "pName: ", pName)
+//(particle VARCHAR(20), epoch INT, timestep INT, x FLOAT, y FLOAT)`
+func PersistParticleLocation(pName string, epoch int, timestep int, x float64, y float64) (PersistResponse, error) {
+	log.Println("epoch: ", epoch, "timestep: ", timestep, "pName: ", pName, "location (", x, y, ")")
 	db, err := sql.Open("postgres", connectionstring)
 	defer db.Close()
 
@@ -202,16 +202,21 @@ func PersistParticleLocation(pName string, epoch int, timestep int, x int, y int
 		return PersistResponse{isSuccess: false}, err
 	}
 
-	localString := fmt.Sprintf("%v", "%v", "%v", "%v", "%v",
+	locString := fmt.Sprintf("'%v', %v, '%v', %v, %v",
 		pName, epoch, timestep, x, y)
-	if resp, err := db.Exec(`INSERT INTO location VALUES( ` + localString + `)`); err != nil {
-		log.Println("Error inserting into location table: ", err)
-		return PersistResponse{isSuccess: false}, err
+	sql := "INSERT INTO location VALUES (" + locString + ")"
+	log.Println("executing: ", sql)
+
+	if resp, err := db.Exec(
+		sql); err != nil {
+		log.Fatal("Failed to persist particle location", err)
 	} else {
-		log.Println("Inserted particle location", resp)
+		log.Println("Persisted location", resp)
 	}
 
-	return PersistResponse{isSuccess: true}, nil
+	return PersistResponse{
+		isSuccess: true,
+	}, nil
 }
 
 func PersistParticle(pName string, mass float64) (PersistResponse, error) {
@@ -290,7 +295,7 @@ func createLocation() {
 		log.Fatal("error connecting to the database: ", err)
 	}
 	sqlString := `CREATE TABLE IF NOT EXISTS location
-	(particle VARCHAR(20), epoch INT, timestep INT, x INT, y INT)`
+	(particle VARCHAR(20), epoch INT, timestep INT, x FLOAT, y FLOAT)`
 	if resp, err := db.Exec(sqlString); err != nil {
 		log.Fatal("Failed to Execute"+sqlString, err)
 	} else {

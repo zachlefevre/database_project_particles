@@ -146,23 +146,23 @@ func getParticleCollisions(w http.ResponseWriter, r *http.Request) {
 }
 
 type particleLocationObj struct {
-	ParticleName string `json:"particleName"`
-	Epoch        int    `json:"epoch"`
-	Timestep     int    `json:"timestep"`
-	X            int    `json:"x"`
-	Y            int    `json:"y"`
+	ParticleName string  `json:"particleName"`
+	Epoch        int     `json:"epoch"`
+	Timestep     int     `json:"timestep"`
+	X            float64 `json:"x"`
+	Y            float64 `json:"y"`
 }
 
 func particleLocation(w http.ResponseWriter, r *http.Request) {
 	var loc particleLocationObj
 	err := json.NewDecoder(r.Body).Decode(&loc)
 	if err != nil {
-		http.Error(w, "Invalid Wall Collision Event", 500)
+		http.Error(w, "Invalid particle location", 500)
 		return
 	}
 	resp, err := sql.PersistParticleLocation(loc.ParticleName, loc.Epoch, loc.Timestep, loc.X, loc.Y)
 	if err != nil {
-		http.Error(w, "Failed to persist wall collision", 500)
+		http.Error(w, "Failed to persist particle location", 500)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
