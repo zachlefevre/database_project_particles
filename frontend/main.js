@@ -4,7 +4,7 @@ axios.defaults.baseURL = "http://localhost"
 axios.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8';
 axios.defaults.headers.post['crossDomain'] = true;
 
-var maxBalls = 20
+var maxBalls = 2
 var ballToSizeScalingRatio = 3
 function wallEvent(particle, wall, epoch, timestep) {
     console.log(particle.name + ' collided with wall ' + wall)
