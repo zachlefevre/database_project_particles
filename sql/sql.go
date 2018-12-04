@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"log"
 
-	_ "github.com/lib/pq"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 const (
@@ -12,12 +12,28 @@ const (
 )
 
 type PersistResponse struct {
-	isSucces bool
+	isSuccess bool
 }
 
 func PersistParticleCollision(p1Name string, p2Name string, epoch int, timestep int) (PersistResponse, error) {
 	log.Println(p1Name + " hit " + p2Name)
-	return PersistResponse{}, nil
+	db, err := sql.Open("postgres", connectionstring)
+	defer db.Close()
+	if err != nil {
+		log.Println("error connecting to the database: ", err)
+		return PersistResponse{isSuccess: false}, err
+	}
+	sqlString, err := db.Prepare("INSERT INTO Knuth.particlecollision(p1, p2, epoch, timestep) VALUES(?, ?, ?, ?)")
+	if err != nil {
+		log.Println("error inserting into particlecollision table: ", err)
+		return PersistResponse{isSuccess: false}, err
+	}
+
+	sqlString.Exec(p1Name, p2Name, epoch, timestep)
+
+	return PersistResponse{
+		isSuccess: true,
+	}, nil
 }
 
 func PersistWallCollisionEvent(pName string, wallName string, epoch int, timestep int) (PersistResponse, error) {
@@ -77,7 +93,7 @@ func createParticle() {
 		log.Fatal("error connecting to the database: ", err)
 	}
 	sqlString := `CREATE TABLE IF NOT EXISTS Knuth.particle
-	(name STRING, mass INT)`
+	(name STRING, mass FLOAT (3, 2))`
 	if resp, err := db.Exec(sqlString); err != nil {
 		log.Fatal("Failed to Execute"+sqlString, err)
 	} else {
