@@ -3,6 +3,8 @@ package main
 import (
 	"os"
 
+	"github.com/rs/cors"
+
 	"github.com/zachlefevre/project_knuth/sql"
 
 	"encoding/json"
@@ -13,19 +15,26 @@ import (
 )
 
 func main() {
-	server := &http.Server{
-		Addr:    ":" + os.Getenv("PORT"),
-		Handler: initRoutes(),
+	var port string
+	if port = os.Getenv("PORT"); port == "" {
+		port = "3080"
 	}
+	handler := cors.New(
+		cors.Options{
+			AllowedOrigins:   []string{"*"},
+			AllowedMethods:   []string{"POST", "GET"},
+			AllowCredentials: true,
+			// Debug:            true,
+		}).Handler(initRoutes())
 	log.Println("Http Server Listening...")
-	if err := server.ListenAndServe(); err != nil {
+	if err := http.ListenAndServe(":"+port, handler); err != nil {
 		log.Fatal(err)
 	}
 }
 func initRoutes() *mux.Router {
 	router := mux.NewRouter()
-	router.HandleFunc("/api/collision/particle", particleCollision).Methods("POST")
-	router.HandleFunc("/api/collision/wall", wallCollision).Methods("POST")
+	router.HandleFunc("/api/collision/particle", particleCollision).Methods("POST", "OPTIONS")
+	router.HandleFunc("/api/collision/wall", wallCollision).Methods("POST", "OPTIONS")
 	router.HandleFunc("/api/location/particle", particleLocation).Methods("POST")
 	router.HandleFunc("/api/sig", sig).Methods("GET")
 	return router
@@ -82,9 +91,6 @@ func wallCollision(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to persist wall collision", 500)
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 	w.WriteHeader(http.StatusCreated)
 	j, _ := json.Marshal(resp)
 	w.Write(j)

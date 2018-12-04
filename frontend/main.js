@@ -1,6 +1,9 @@
 console.log("main.js loaded");
-// var apiURL = "localhost:3080/api"
-var apiURL = "https://secure-fjord-56157.herokuapp.com/api"
+var apiURL = "http://localhost:3080/api"
+axios.defaults.baseURL = "http://localhost"
+axios.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8';
+axios.defaults.headers.post['crossDomain'] = true;
+
 var maxBalls = 2
 var ballToSizeScalingRatio = 3
 function wallEvent(particle, wall, epoch, timestep) {
@@ -148,7 +151,7 @@ function reset() {
     }
 }
 function setup() {
-    frameRate(5)
+    frameRate(60)
     createCanvas(innerWidth, innerHeight);
     ballArr = [];
 
