@@ -105,7 +105,24 @@ func GetAllWallCollisionEvents() {
 }
 
 func PersistParticleLocation(pName string, epoch int, timestep int, x int, y int) (PersistResponse, error) {
-	return PersistResponse{}, nil
+	log.Println(pName + " in epoch" + epoch + " was at x=" + x + " and y=" + y + " at timestep: " + timestep)
+	db, err := sql.Open("postgres", connectionstring)
+	defer db.Close()
+
+	if err != nil {
+		log.Println("Error connecting to the database: ", err)
+		return PersistResponse{isSuccess: false}, err
+	}
+	
+	sqlString, err := db.Prepare("INSERT INTO location(p, epoch, timestep, x, y) VALUES(?, ?, ?, ?, ?)")
+	if err != nil {
+		log.Println("Error inserting into location table: ", err)
+		return PersistResponse{isSuccess: false}, err
+	}
+
+	sqlString.Exec(pName, epoch, timestep, x, y)
+
+	return PersistResponse{isSuccess: true}, nil
 }
 
 func createParticleCollision() {
