@@ -1,5 +1,5 @@
 console.log("main.js loaded");
-var apiURL = "http://algorithm-api:3080/api"
+var apiURL = "http://localhost:3080/api"
 axios.defaults.baseURL = "http://localhost"
 axios.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8';
 axios.defaults.headers.post['crossDomain'] = true;

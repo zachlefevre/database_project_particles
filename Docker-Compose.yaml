@@ -3,17 +3,15 @@ services:
   algorithm-api:
     build:
       context: api
-    image: frlnbrg/project_hopper_algorithm_api
+    image: frlnbrg/project_knuth_api
     ports:
-    - "80:80"
+    - "3080:3080"
     restart: always
   
-  postgresql:
+  pg:
     build:
       context: .
       dockerfile: Dockerfile-postgres
-    ports:
-      - "5439:5432"
     environment:
       - POSTGRES_DB=postgresDB
       - POSTGRES_USER=postgres

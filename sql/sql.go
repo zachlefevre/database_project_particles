@@ -13,7 +13,7 @@ import (
 
 const (
 	// connectionstring = "user=postgres dbname=postgres sslmode=disable"
-	connectionstring = "postgres://postgres:PG_PASS@localhost:5439/postgres?sslmode=disable"
+	connectionstring = "postgres://postgres:PG_PASS@pg:5432/postgres?sslmode=disable"
 )
 
 type PersistResponse struct {
