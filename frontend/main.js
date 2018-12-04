@@ -1,10 +1,10 @@
 console.log("main.js loaded");
-var apiURL = "http://localhost:3080/api"
+var apiURL = "http://algorithm-api:3080/api"
 axios.defaults.baseURL = "http://localhost"
 axios.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8';
 axios.defaults.headers.post['crossDomain'] = true;
 
-var maxBalls = 2
+var maxBalls = 5
 var ballToSizeScalingRatio = 3
 function wallEvent(particle, wall, epoch, timestep) {
     data = {
@@ -28,6 +28,18 @@ function ballEvent(particle1, particle2, epoch, timestep) {
         mode: 'no-cors'
     }
     axios.post(apiURL + "/collision/particle", data).then(ret => console.log(ret)).catch(err => console.log(err, JSON.stringify(data)))
+}
+
+function sendParticleLocation(particle, epoch, timestep){
+    console.log("sending particle location")
+    data = {
+        particleName: particle.name,
+        epoch: epoch,
+        timestep: timestep,
+        x: particle.location.x,
+        y: particle.location.y
+    }
+    axios.post(apiURL + "/location/particle", data).then(ret => console.log(ret)).catch(err => console.log(err, JSON.stringify(data)))
 
 }
 
@@ -170,7 +182,7 @@ function reset() {
     }
 }
 function setup() {
-    frameRate(50)
+    frameRate(20)
     createCanvas(innerWidth, innerHeight);
     ballArr = [];
 
@@ -191,6 +203,7 @@ function draw() {
     background(255);
     pool.display();
     for (var i = 0; i < ballArr.length; i++) {
+        sendParticleLocation(ballArr[i], epoch, ts)
         var wind = new Pvector(random(.05), 0);
         var gravity = new Pvector(0, 0.1 * (ballArr[i].mass));
 
@@ -205,6 +218,7 @@ function draw() {
             ballArr[i].drag(pool);
         }
         ballArr[i].limit();
+
     }
     ts++
     if (ts % 300 == 0) {
