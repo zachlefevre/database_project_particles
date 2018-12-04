@@ -31,6 +31,17 @@ function ballEvent(particle1, particle2, epoch, timestep) {
 
 }
 
+function sendParticles() {
+    for (var i = 0; i < ballArr.length; i++) {
+        var ball = ballArr[i]
+        data = {
+            name: ball.name,
+            mass: ball.mass
+        }
+        axios.post(apiURL + "/entity/particle", data).then(ret => console.log(ret)).catch(err => console.log(err, JSON.stringify(data)))
+    }
+}
+
 class Liquid {
     constructor({ x_, y_, w_, h_, c_ }) {
         this.x = x_;
@@ -172,6 +183,7 @@ function setup() {
     }
     pool = new Liquid(liquidParam);
     reset()
+    sendParticles()
 }
 var epoch = 0;
 var ts = 0;

@@ -160,11 +160,68 @@ func GetAllWallCollisionEvents() []string {
 	return collisions
 
 }
+func GetAllParticles() []string {
+	db, err := sql.Open("postgres", connectionstring)
+	defer db.Close()
+	if err != nil {
+		log.Println("error connecting to the database: ", err)
+	}
+
+	sql := "SELECT * FROM particle"
+	log.Println("executing: ", sql)
+
+	rows, err := db.Query(sql)
+	if err != nil {
+		log.Fatal("Failed to get particles", err)
+	}
+	defer rows.Close()
+	var particles []string
+	for rows.Next() {
+		var (
+			name string
+			mass float64
+		)
+		if err := rows.Scan(&name, &mass); err != nil {
+			log.Fatal("Failed to read particle row", err)
+		}
+		p := fmt.Sprintf("%v exists with mass %v",
+			name, mass)
+		particles = append(particles, p)
+	}
+	return particles
+}
 
 func PersistParticleLocation(pName string, epoch int, timestep int, x int, y int) (PersistResponse, error) {
 	return PersistResponse{}, nil
 }
 
+func PersistParticle(pName string, mass float64) (PersistResponse, error) {
+	log.Println("pName: ", pName, "mass", mass)
+	db, err := sql.Open("postgres", connectionstring)
+	defer db.Close()
+	if err != nil {
+		log.Println("error connecting to the database: ", err)
+		return PersistResponse{
+			isSuccess: false,
+		}, err
+	}
+
+	pString := fmt.Sprintf("'%v', %v",
+		pName,
+		mass)
+	sql := "INSERT INTO particle VALUES (" + pString + ")"
+	log.Println("executing: ", sql)
+
+	if resp, err := db.Exec(
+		sql); err != nil {
+		log.Fatal("Failed to persist particle", err)
+	} else {
+		log.Println("Persisted particle ", resp)
+	}
+	return PersistResponse{
+		isSuccess: true,
+	}, nil
+}
 func createParticleCollision() {
 	db, err := sql.Open("postgres", connectionstring)
 	defer db.Close()
